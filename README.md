@@ -7,11 +7,11 @@ zero-knowledge proof system from
 > Zero-Knowledge Proofs for Circuits and Polynomials over Any Field*,
 > ACM CCS 2021. <https://eprint.iacr.org/2021/076>
 
-About 2,500 lines of Python, no third-party dependencies. Eight
-modules, 76 tests, six runnable demos. Soundness error is `~m / |F|`
-for `m` multiplication gates: well below `2^-120` over the Mersenne
-prime `2^127 - 1`, and below `2^-127` over `GF(2^128)` for boolean
-circuits.
+About 2,500 lines of Python, with no third-party runtime dependencies.
+The repo currently has 13 package modules, 77 tests, and five runnable
+demos. Soundness error is `~m / |F|` for `m` multiplication gates:
+well below `2^-120` over the Mersenne prime `2^127 - 1`, and below
+`2^-127` over `GF(2^128)` for boolean circuits.
 
 ## What QuickSilver does
 
@@ -89,10 +89,32 @@ of the transcript, making the proof a single non-interactive object.
         einsum.py           Compile tensor-logic einsum into a circuit
         zk_reachability.py  ZK proof of graph reachability
 
-    tests/                  76 tests across 6 files
-    demos/                  6 runnable demos
+    tests/                  77 tests across 7 files
+    demos/                  five runnable demos
+
+## Install
+
+Requires Python 3.10 or newer. Commands below use `python3`; if your
+shell's `python` command is Python 3.10+, `python -m pytest` is
+equivalent to `python3 -m pytest`.
+
+```bash
+python3 -m pip install -e .[dev]
+```
 
 ## Usage
+
+Security boundaries before running the examples:
+
+- The default VOLE setup uses a trusted dealer simulator. It is useful
+  for protocol tests and demos, not for a deployable multi-party setup.
+- `LpnParams.default(...)` uses toy defaults and a trusted dealer base;
+  it is not secure for production cryptography.
+- QuickSilver here is designated-verifier zero knowledge. The
+  Fiat-Shamir helper makes a non-interactive object for this setting,
+  not a publicly transferable proof.
+- This is pure Python and scalar arithmetic. Expect demo-scale
+  performance, not production prover throughput.
 
 ```python
 from quicksilver import Circuit, run
@@ -164,30 +186,36 @@ ok, proof = run_ni(c, [1_000_003, 999_983])
 ## Run
 
 ```bash
-python -m pytest tests/ -v                       # 76 passing in <1s
+python3 -m pytest tests/ -q                      # full test suite
+make quick-validate                              # tests + small demo subset
+
+# `make quick-validate` skips the LPN scaling demo by default. To run
+# every tracked demo manually:
 
 # Prime-field demos
-python demos/quicksilver_demo.py                 # factorisation, polys
-python demos/zk_graph_reachability.py            # graph + walk in ZK
-python demos/zk_einsum.py                        # matmul, grandparent rule
+python3 demos/quicksilver_demo.py                # factorisation, polys
+python3 demos/zk_graph_reachability.py           # graph + walk in ZK
+python3 demos/zk_einsum.py                       # matmul, grandparent rule
 
 # Binary-field demos
-python demos/quicksilver_boolean_demo.py         # 8-bit multiplier, mixer
+python3 demos/quicksilver_boolean_demo.py        # 8-bit multiplier, mixer
 
-# Real-cryptography demos
-python demos/lpn_vole_demo.py                    # LPN-based PCG
+# VOLE PCG demo, including a scaling table
+python3 demos/lpn_vole_demo.py                   # LPN-based PCG
 ```
 
 ## Tensor-logic tie-in
 
 The repo's premise -- a Datalog rule head and an einsum are the same
-operation -- gives a one-line ZK frontend. The recurrence that defines
-boolean transitive closure in `demos/transitive_closure.py`,
+operation -- gives a one-line ZK frontend. A sibling
+`transitive_closure.py` example from this line of work used the
+recurrence
 
     Path = step( Edge + einsum('xy,yz->xz', Path, Edge) ),
 
-is also the natural ZK statement "I know a graph and a walk inside
-it." `zk_reachability.py` constrains, for committed adjacency `E` and
+as the cleartext boolean transitive-closure rule. That file is sibling
+context, not one of this repo's five runnable demos. The tracked
+`zk_reachability.py` demo constrains, for committed adjacency `E` and
 one-hot frontier vectors `alpha_0, ..., alpha_k`, the einsum identity
 `alpha_i^T E alpha_{i+1} = 1` at every step. The verifier learns
 nothing about `E` or the walk's interior beyond `(n, k, source,
