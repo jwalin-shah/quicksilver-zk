@@ -60,6 +60,11 @@ class BatchedCheck:
     V: int
 
 
+def _challenge_is_valid(chi: int, field: Fp) -> bool:
+    """Verifier challenge must be a non-zero field element."""
+    return isinstance(chi, int) and 0 < chi < field.p
+
+
 # ---- Prover walker ---------------------------------------------------------
 
 
@@ -256,6 +261,18 @@ def verify(
     msg2: BatchedCheck,
     field: Fp = F,
 ) -> bool:
+    """Designated-verifier verifier entrypoint.
+
+    Rejects malformed verifier challenges (zero or non-field values) to
+    fail-closed. This does not change protocol semantics; it only tightens
+    verifier-side input validation.
+
+    Security note: this is designated-verifier ZK. The default trusted-dealer
+    VOLE setup and toy LPN defaults in ``lpn_vole`` are for demos only.
+    """
+    if not _challenge_is_valid(chi, field):
+        return False
+
     walker = _VerifierWalker(circuit=circuit, share=share, field=field)
     walker.receive(msg1)
     if not walker.check_assertions():

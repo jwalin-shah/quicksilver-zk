@@ -187,21 +187,23 @@ ok, proof = run_ni(c, [1_000_003, 999_983])
 
 ```bash
 python3 -m pytest tests/ -q                      # full test suite
+python3 -m quicksilver test                      # package-level test command
 make quick-validate                              # tests + small demo subset
+python3 -m quicksilver demo                      # run all demos
 
 # `make quick-validate` skips the LPN scaling demo by default. To run
 # every tracked demo manually:
 
 # Prime-field demos
-python3 demos/quicksilver_demo.py                # factorisation, polys
-python3 demos/zk_graph_reachability.py           # graph + walk in ZK
-python3 demos/zk_einsum.py                       # matmul, grandparent rule
+python3 -m quicksilver demo quicksilver_demo.py # factorisation, polys
+python3 -m quicksilver demo zk_graph_reachability.py  # graph + walk in ZK
+python3 -m quicksilver demo zk_einsum.py         # matmul, grandparent rule
 
 # Binary-field demos
-python3 demos/quicksilver_boolean_demo.py        # 8-bit multiplier, mixer
+python3 -m quicksilver demo quicksilver_boolean_demo.py # 8-bit multiplier, mixer
 
 # VOLE PCG demo, including a scaling table
-python3 demos/lpn_vole_demo.py                   # LPN-based PCG
+python3 -m quicksilver demo lpn_vole_demo.py     # LPN-based PCG
 ```
 
 ## Tensor-logic tie-in

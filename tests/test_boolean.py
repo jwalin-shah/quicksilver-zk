@@ -165,6 +165,19 @@ def test_soundness_tampered_assertion_caught():
     assert not verify(c, v, msg1, chi, msg2)
 
 
+def test_verify_rejects_invalid_challenge():
+    c = BoolCircuit()
+    a = c.input()
+    b = c.input()
+    c.assert_eq_const(c.and_(a, b), 1)
+    p, v = trusted_dealer_setup(c.vole_count())
+    msg1, batched = prove(c, [1, 1], p)
+    msg2 = batched(GF128.rand_nonzero())
+
+    assert not verify(c, v, msg1, 0, msg2)
+    assert not verify(c, v, msg1, GF128.p, msg2)
+
+
 # ---- Larger circuit -----------------------------------------------------
 
 

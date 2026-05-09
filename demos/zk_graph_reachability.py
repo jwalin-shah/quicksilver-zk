@@ -13,17 +13,12 @@ Statement proved:
 Verifier learns nothing about G or about the intermediate vertices of
 the walk beyond what (n, k, s, t) already imply.
 
-Run from the repo root:
+Run with the package command:
 
-    python demos/zk_graph_reachability.py
+    python -m quicksilver demo zk_graph_reachability.py
 """
 
 from __future__ import annotations
-
-import os
-import sys
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import time
 from collections import deque

@@ -8,17 +8,12 @@ Three vignettes that exercise the full prover/verifier loop:
 3. Polynomial-extension demo: prove three quadratic constraints with a
    single batched degree-2 check, no extra circuit wires.
 
-Run from the repo root:
+Run with the package command:
 
-    python demos/quicksilver_demo.py
+    python -m quicksilver demo quicksilver_demo.py
 """
 
 from __future__ import annotations
-
-import os
-import sys
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import time
 
