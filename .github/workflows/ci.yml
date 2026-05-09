@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package with dev dependencies
+        run: python3 -m pip install -e .[dev]
+
+      - name: Verify package import
+        run: python3 -c "import quicksilver; print(quicksilver.__all__)"
+
+      - name: Run tests
+        run: python3 -m pytest tests/ -q
