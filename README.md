@@ -8,7 +8,7 @@ zero-knowledge proof system from
 > ACM CCS 2021. <https://eprint.iacr.org/2021/076>
 
 About 2,500 lines of Python, with no third-party runtime dependencies.
-The repo currently has 13 package modules, 77 tests, and five runnable
+The repo currently has 14 package modules, 81 tests, and five runnable
 demos. Soundness error is `~m / |F|` for `m` multiplication gates:
 well below `2^-120` over the Mersenne prime `2^127 - 1`, and below
 `2^-127` over `GF(2^128)` for boolean circuits.
@@ -88,8 +88,10 @@ of the transcript, making the proof a single non-interactive object.
         fiat_shamir.py      Non-interactive variant via SHA-256 transcript
         einsum.py           Compile tensor-logic einsum into a circuit
         zk_reachability.py  ZK proof of graph reachability
+        cli.py              Package-level test and demo runner
+        __main__.py         `python3 -m quicksilver` entry point
 
-    tests/                  77 tests across 7 files
+    tests/                  81 tests across 8 files
     demos/                  five runnable demos
 
 ## Install
