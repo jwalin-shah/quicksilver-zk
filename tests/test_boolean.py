@@ -11,6 +11,7 @@ import pytest
 
 from quicksilver.boolean import (
     BBatchedCheck,
+    BCommitMessage,
     BoolCircuit,
     prove,
     run,
@@ -151,6 +152,25 @@ def test_soundness_tampered_batched_check_caught():
     msg2 = batched(chi)
     bad = BBatchedCheck(U=msg2.U ^ 1, V=msg2.V)
     assert not verify(c, v, msg1, chi, bad)
+
+
+def test_soundness_zero_challenge_rejects_malicious_and_transcript():
+    c = BoolCircuit()
+    a, b = c.input(), c.input()
+    c.and_(a, b)
+
+    p, v = trusted_dealer_setup(c.vole_count())
+    msg1 = BCommitMessage(
+        d_values=[
+            1 ^ p.u[0],
+            1 ^ p.u[1],
+            0 ^ p.u[2],
+        ],
+        assert_openings=[],
+    )
+    msg2 = BBatchedCheck(U=p.v[3], V=p.u[3])
+
+    assert not verify(c, v, msg1, 0, msg2)
 
 
 def test_soundness_tampered_assertion_caught():

@@ -202,6 +202,9 @@ def test_soundness_prover_lies_about_mul_output():
     chi = F.rand_nonzero()
     # Mask using the last VOLE element (index 3 = num_inputs + num_muls).
     a, b = p_share.u[3], p_share.v[3]
+    zero_msg2 = BatchedCheck(U=b, V=a)
+    assert not verify(c, v_share, msg1, 0, zero_msg2)
+
     U = F.add(F.mul(chi, A0), b)
     V = F.add(F.mul(chi, A1), a)
     msg2 = BatchedCheck(U=U, V=V)
@@ -294,8 +297,12 @@ def test_polynomial_soundness_caught():
     # Honest prove call ignores soundness and just reports A_0..A_{d-1}.
     # The verifier's check should still fail because A_d != 0.
     mask_p, mask_v = trusted_dealer_setup(2, delta=delta)  # d-1 = 2 mask elements
+    with pytest.raises(ValueError, match="chi must be nonzero"):
+        prove_polys([poly], pwires, 0, mask_p)
+
     chi = F.rand_nonzero()
     proof = prove_polys([poly], pwires, chi, mask_p)
+    assert not verify_polys([poly], vwires, 0, proof, mask_v)
     assert not verify_polys([poly], vwires, chi, proof, mask_v)
 
 
