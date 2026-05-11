@@ -145,6 +145,8 @@ def prove_polys(
         raise ValueError("degree must be at least 1")
     if len(mask) != d - 1:
         raise ValueError(f"need exactly {d - 1} masking VOLE elements, got {len(mask)}")
+    if field.encode(chi) == 0:
+        raise ValueError("chi must be nonzero")
 
     # Aggregate A_e = sum_j chi^j * A_{e,j}, e = 0..d.  Honest -> A_d = 0.
     A = [0] * (d + 1)
@@ -183,6 +185,8 @@ def verify_polys(
     if len(proof.masked_A) != d:
         return False
     if len(mask) != d - 1:
+        return False
+    if field.encode(chi) == 0:
         return False
     delta = mask.delta
 

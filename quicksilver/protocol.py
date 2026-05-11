@@ -256,6 +256,8 @@ def verify(
     msg2: BatchedCheck,
     field: Fp = F,
 ) -> bool:
+    if field.encode(chi) == 0:
+        return False
     walker = _VerifierWalker(circuit=circuit, share=share, field=field)
     walker.receive(msg1)
     if not walker.check_assertions():

@@ -378,6 +378,8 @@ def verify(
     msg2: BBatchedCheck,
     mac_field: GF2k = GF128,
 ) -> bool:
+    if mac_field.encode(chi) == 0:
+        return False
     walker = _BVerifierWalker(
         circuit=circuit, share=share, mac_field=mac_field
     )
