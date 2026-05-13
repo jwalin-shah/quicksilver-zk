@@ -60,6 +60,10 @@ class BatchedCheck:
     V: int
 
 
+def _challenge_is_valid(chi: int, field: Fp) -> bool:
+    return type(chi) is int and 0 < chi < field.p
+
+
 # ---- Prover walker ---------------------------------------------------------
 
 
@@ -256,7 +260,7 @@ def verify(
     msg2: BatchedCheck,
     field: Fp = F,
 ) -> bool:
-    if field.encode(chi) == 0:
+    if not _challenge_is_valid(chi, field):
         return False
     walker = _VerifierWalker(circuit=circuit, share=share, field=field)
     walker.receive(msg1)
