@@ -61,7 +61,7 @@ class BatchedCheck:
 
 
 def _challenge_is_valid(chi: int, field: Fp) -> bool:
-    return isinstance(chi, int) and 0 < chi < field.p
+    return type(chi) is int and 0 < chi < field.p
 
 
 # ---- Prover walker ---------------------------------------------------------

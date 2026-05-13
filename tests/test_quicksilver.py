@@ -248,6 +248,7 @@ def test_verify_rejects_malformed_challenges():
     msg2 = batched(F.rand_nonzero())
 
     assert not verify(c, v_share, msg1, -1, msg2)
+    assert not verify(c, v_share, msg1, True, msg2)
     assert not verify(c, v_share, msg1, F.p, msg2)
     assert not verify(c, v_share, msg1, F.p + 1, msg2)
     assert not verify(c, v_share, msg1, "1", msg2)
