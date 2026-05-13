@@ -94,6 +94,32 @@ of the transcript, making the proof a single non-interactive object.
     tests/                  81 tests across 8 files
     demos/                  five runnable demos
 
+## Maintenance map
+
+Use the protocol layer as the main navigation path when changing the
+repo:
+
+- `field.py`, `gf2k.py`, `vole.py`, and `lpn_vole.py` are the
+  arithmetic and preprocessing foundation. Keep them independent of
+  circuit or demo code.
+- `itmac.py` defines the prime-field wire MAC operations used by
+  `protocol.py`; boolean circuits use the separate GF(2^128) path in
+  `boolean.py`.
+- `circuit.py` is the arithmetic-circuit IR. `protocol.py` walks that
+  IR twice, once for the prover and once for the verifier.
+- `polynomial.py`, `fiat_shamir.py`, `einsum.py`, and
+  `zk_reachability.py` are feature layers on top of the base protocol.
+  They should depend inward on the core protocol modules, not on demos.
+- `cli.py` and `demos/` are runnable surfaces. Prefer adding coverage
+  in `tests/` before broadening those surfaces.
+
+For a focused protocol change, start with the matching test file under
+`tests/`, then read the core module and only the feature layer that
+exercises it. For example, verifier challenge handling lives in
+`protocol.py` and `boolean.py`, with regression coverage in
+`tests/test_quicksilver.py`, `tests/test_boolean.py`, and
+`tests/test_fiat_shamir.py`.
+
 ## Install
 
 Requires Python 3.10 or newer. Commands below use `python3`; if your
