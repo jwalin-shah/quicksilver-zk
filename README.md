@@ -189,6 +189,9 @@ ok, proof = run_ni(c, [1_000_003, 999_983])
 python3 -m pytest tests/ -q                      # full test suite
 make quick-validate                              # tests + small demo subset
 
+# Pull requests run the same quick validation target in CI:
+make quick-validate PYTHON=python3
+
 # `make quick-validate` skips the LPN scaling demo by default. To run
 # every tracked demo manually:
 
