@@ -201,6 +201,10 @@ class BBatchedCheck:
     V: int
 
 
+def _challenge_is_valid(chi: int, field: GF2k) -> bool:
+    return isinstance(chi, int) and 0 < chi < field.p
+
+
 @dataclass
 class _BProverWalker:
     circuit: BoolCircuit
@@ -378,7 +382,7 @@ def verify(
     msg2: BBatchedCheck,
     mac_field: GF2k = GF128,
 ) -> bool:
-    if mac_field.encode(chi) == 0:
+    if not _challenge_is_valid(chi, mac_field):
         return False
     walker = _BVerifierWalker(
         circuit=circuit, share=share, mac_field=mac_field

@@ -241,6 +241,18 @@ def test_soundness_tampered_batched_check_caught():
     assert not verify(c, v_share, msg1, chi, msg2)
 
 
+def test_verify_rejects_malformed_challenges():
+    c = _build_mul_circuit(target_z=56)
+    p_share, v_share = trusted_dealer_setup(c.vole_count())
+    msg1, batched = prove(c, [7, 8], p_share)
+    msg2 = batched(F.rand_nonzero())
+
+    assert not verify(c, v_share, msg1, -1, msg2)
+    assert not verify(c, v_share, msg1, F.p, msg2)
+    assert not verify(c, v_share, msg1, F.p + 1, msg2)
+    assert not verify(c, v_share, msg1, "1", msg2)
+
+
 # ---- Polynomial extension ----------------------------------------------
 
 

@@ -77,6 +77,15 @@ def test_ni_tamper_msg1_invalidates_chi():
     assert not verify_ni(c, v_share, bad)
 
 
+def test_ni_rejects_zero_transcript_challenge(monkeypatch):
+    c = _factor_circuit(56)
+    p_share, v_share = trusted_dealer_setup(c.vole_count())
+    proof = prove_ni(c, [7, 8], p_share)
+
+    monkeypatch.setattr(Transcript, "challenge", lambda self, field=F: 0)
+    assert not verify_ni(c, v_share, proof)
+
+
 def test_ni_label_must_match():
     c = _factor_circuit(56)
     p_share, v_share = trusted_dealer_setup(c.vole_count())
