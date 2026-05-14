@@ -8,7 +8,7 @@ zero-knowledge proof system from
 > ACM CCS 2021. <https://eprint.iacr.org/2021/076>
 
 About 2,500 lines of Python, with no third-party runtime dependencies.
-The repo currently has 13 package modules, 77 tests, and five runnable
+The repo currently has 14 package modules, 81 tests, and five runnable
 demos. Soundness error is `~m / |F|` for `m` multiplication gates:
 well below `2^-120` over the Mersenne prime `2^127 - 1`, and below
 `2^-127` over `GF(2^128)` for boolean circuits.
@@ -88,8 +88,10 @@ of the transcript, making the proof a single non-interactive object.
         fiat_shamir.py      Non-interactive variant via SHA-256 transcript
         einsum.py           Compile tensor-logic einsum into a circuit
         zk_reachability.py  ZK proof of graph reachability
+        cli.py              Package-level test and demo runner
+        __main__.py         `python3 -m quicksilver` entry point
 
-    tests/                  77 tests across 7 files
+    tests/                  81 tests across 8 files
     demos/                  five runnable demos
 
 ## Maintenance map
@@ -108,8 +110,8 @@ repo:
 - `polynomial.py`, `fiat_shamir.py`, `einsum.py`, and
   `zk_reachability.py` are feature layers on top of the base protocol.
   They should depend inward on the core protocol modules, not on demos.
-- `demos/` contains the runnable surfaces. Prefer adding coverage in
-  `tests/` before broadening those surfaces.
+- `cli.py` and `demos/` are runnable surfaces. Prefer adding coverage
+  in `tests/` before broadening those surfaces.
 
 For a focused protocol change, start with the matching test file under
 `tests/`, then read the core module and only the feature layer that
@@ -213,7 +215,9 @@ ok, proof = run_ni(c, [1_000_003, 999_983])
 
 ```bash
 python3 -m pytest tests/ -q                      # full test suite
+python3 -m quicksilver test                      # package-level test command
 make quick-validate                              # tests + small demo subset
+python3 -m quicksilver demo                      # run all demos
 
 # Pull requests run the same quick validation target in CI:
 make quick-validate PYTHON=python3
@@ -222,15 +226,15 @@ make quick-validate PYTHON=python3
 # every tracked demo manually:
 
 # Prime-field demos
-python3 demos/quicksilver_demo.py                # factorisation, polys
-python3 demos/zk_graph_reachability.py           # graph + walk in ZK
-python3 demos/zk_einsum.py                       # matmul, grandparent rule
+python3 -m quicksilver demo quicksilver_demo.py # factorisation, polys
+python3 -m quicksilver demo zk_graph_reachability.py  # graph + walk in ZK
+python3 -m quicksilver demo zk_einsum.py         # matmul, grandparent rule
 
 # Binary-field demos
-python3 demos/quicksilver_boolean_demo.py        # 8-bit multiplier, mixer
+python3 -m quicksilver demo quicksilver_boolean_demo.py # 8-bit multiplier, mixer
 
 # VOLE PCG demo, including a scaling table
-python3 demos/lpn_vole_demo.py                   # LPN-based PCG
+python3 -m quicksilver demo lpn_vole_demo.py     # LPN-based PCG
 ```
 
 ## Tensor-logic tie-in

@@ -148,6 +148,12 @@ def verify_ni(
     field: Fp = F,
     label: bytes = _DOMAIN,
 ) -> bool:
+    """Designated-verifier verifier over a transcript-derived challenge.
+
+    This path remains non-transferable; it is secure for private verifier
+    checks, not universal/public proof checking. For production VOLE, avoid
+    toy defaults in :mod:`quicksilver.lpn_vole`.
+    """
     t = Transcript(label)
     t.absorb_circuit(circuit)
     _absorb_msg1(t, proof.msg1)

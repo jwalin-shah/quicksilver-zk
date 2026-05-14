@@ -247,7 +247,8 @@ def test_verify_rejects_malformed_challenges():
     msg1, batched = prove(c, [7, 8], p_share)
     msg2 = batched(F.rand_nonzero())
 
-    assert not verify(c, v_share, msg1, -1, msg2)
+    assert not verify(c, v_share, msg1, 0, msg2)  # zero is never valid
+    assert not verify(c, v_share, msg1, -1, msg2)  # negative invalid
     assert not verify(c, v_share, msg1, True, msg2)
     assert not verify(c, v_share, msg1, F.p, msg2)
     assert not verify(c, v_share, msg1, F.p + 1, msg2)

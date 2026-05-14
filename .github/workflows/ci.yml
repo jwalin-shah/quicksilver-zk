@@ -25,5 +25,8 @@ jobs:
       - name: Install package with test dependencies
         run: python3 -m pip install -e .[test]
 
+      - name: Verify package import
+        run: python3 -c "import quicksilver; print(quicksilver.__all__)"
+
       - name: Run quick validation
         run: make quick-validate PYTHON=python3

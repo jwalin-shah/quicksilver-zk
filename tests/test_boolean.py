@@ -194,6 +194,7 @@ def test_verify_rejects_malformed_challenges():
     msg1, batched = prove(c, [1, 1], p)
     msg2 = batched(GF128.rand_nonzero())
 
+    assert not verify(c, v, msg1, 0, msg2)
     assert not verify(c, v, msg1, True, msg2)
     assert not verify(c, v, msg1, GF128.p, msg2)
     assert not verify(c, v, msg1, GF128.p + 1, msg2)

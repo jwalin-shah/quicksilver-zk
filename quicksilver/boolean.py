@@ -202,6 +202,7 @@ class BBatchedCheck:
 
 
 def _challenge_is_valid(chi: int, field: GF2k) -> bool:
+    """Verifier challenge must be a non-zero field element."""
     return type(chi) is int and 0 < chi < field.p
 
 
@@ -382,6 +383,11 @@ def verify(
     msg2: BBatchedCheck,
     mac_field: GF2k = GF128,
 ) -> bool:
+    """Boolean verifier entrypoint.
+
+    Rejects malformed verifier challenges (zero or non-field values) to
+    fail-closed while preserving protocol behavior on valid inputs.
+    """
     if not _challenge_is_valid(chi, mac_field):
         return False
     walker = _BVerifierWalker(
