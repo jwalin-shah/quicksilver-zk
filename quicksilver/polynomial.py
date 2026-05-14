@@ -123,6 +123,126 @@ class PolyProof:
     masked_A: List[int]  # length d
 
 
+@dataclass(frozen=True)
+class PolynomialBatch:
+    """A homogeneous-degree batch of polynomial-zero constraints."""
+
+    polys: Tuple[Polynomial, ...]
+
+    def __post_init__(self) -> None:
+        polys = tuple(self.polys)
+        if not polys:
+            raise ValueError("need at least one polynomial")
+        d = max(p.degree for p in polys)
+        if any(p.degree != d for p in polys):
+            raise ValueError("batched polys must share the same degree")
+        if d < 1:
+            raise ValueError("degree must be at least 1")
+        object.__setattr__(self, "polys", polys)
+
+    @property
+    def degree(self) -> int:
+        return self.polys[0].degree
+
+    @property
+    def mask_count(self) -> int:
+        return self.degree - 1
+
+    def new_mask(
+        self, field: Fp = F, delta: int | None = None
+    ) -> tuple[VoleProverShare, VoleVerifierShare]:
+        return trusted_dealer_setup(self.mask_count, field, delta=delta)
+
+    def _validate_mask(self, mask: VoleProverShare | VoleVerifierShare) -> None:
+        if len(mask) != self.mask_count:
+            raise ValueError(
+                f"need exactly {self.mask_count} masking VOLE elements, got {len(mask)}"
+            )
+
+    def prove(
+        self,
+        prover_wires: dict,
+        chi: int,
+        mask: VoleProverShare,
+        field: Fp = F,
+    ) -> PolyProof:
+        """Prover side of this batched degree-d polynomial-zero check."""
+        self._validate_mask(mask)
+        if field.encode(chi) == 0:
+            raise ValueError("chi must be nonzero")
+
+        # Aggregate A_e = sum_j chi^j * A_{e,j}, e = 0..d.  Honest -> A_d = 0.
+        A = [0] * (self.degree + 1)
+        chi_j = 1
+        for poly in self.polys:
+            chi_j = field.mul(chi_j, chi)  # chi^1, chi^2, ...
+            coeffs = _delta_coefficients(poly, prover_wires, field)
+            for e, c in enumerate(coeffs):
+                A[e] = field.add(A[e], field.mul(chi_j, c))
+
+        # Mask using the construction described in the module docstring:
+        # A_0' = A_0 + b^{(0)}
+        # A_e' = A_e + a^{(e-1)} + b^{(e)}     for 1 <= e <= d-2
+        # A_{d-1}' = A_{d-1} + a^{(d-2)}
+        masked = list(A[: self.degree])  # drop A_d (must be zero)
+        for j in range(self.mask_count):
+            a_j, b_j = mask.u[j], mask.v[j]
+            masked[j] = field.add(masked[j], b_j)
+            masked[j + 1] = field.add(masked[j + 1], a_j)
+        return PolyProof(masked_A=masked)
+
+    def verify(
+        self,
+        verifier_wires: dict,
+        chi: int,
+        proof: PolyProof,
+        mask: VoleVerifierShare,
+        field: Fp = F,
+    ) -> bool:
+        if len(proof.masked_A) != self.degree:
+            return False
+        try:
+            self._validate_mask(mask)
+        except ValueError:
+            return False
+        if field.encode(chi) == 0:
+            return False
+        delta = mask.delta
+
+        # LHS: sum_e A_e' * Delta^e
+        lhs = 0
+        delta_pow = 1
+        for e in range(self.degree):
+            lhs = field.add(lhs, field.mul(proof.masked_A[e], delta_pow))
+            delta_pow = field.mul(delta_pow, delta)
+
+        # RHS: sum_j chi^j * P_j(K_1, ..., K_n) + sum_j c^{(j)} * Delta^j
+        rhs = 0
+        chi_j = 1
+        for poly in self.polys:
+            chi_j = field.mul(chi_j, chi)
+            b_j = _evaluate_on_keys(poly, verifier_wires, delta, field)
+            rhs = field.add(rhs, field.mul(chi_j, b_j))
+        delta_pow = 1
+        for j in range(self.mask_count):
+            rhs = field.add(rhs, field.mul(mask.w[j], delta_pow))
+            delta_pow = field.mul(delta_pow, delta)
+        return lhs == rhs
+
+    def run(
+        self,
+        prover_wires: dict,
+        verifier_wires: dict,
+        delta: int,
+        field: Fp = F,
+    ) -> bool:
+        """End-to-end check for this batch against existing IT-MACs."""
+        p_share, v_share = self.new_mask(field, delta=delta)
+        chi = field.rand_nonzero()
+        proof = self.prove(prover_wires, chi, p_share, field)
+        return self.verify(verifier_wires, chi, proof, v_share, field)
+
+
 def prove_polys(
     polys: Sequence[Polynomial],
     prover_wires: dict,
@@ -136,37 +256,7 @@ def prove_polys(
     verifier's challenge.  Honest prover: every polynomial in ``polys``
     evaluates to zero on the committed wire values.
     """
-    if not polys:
-        raise ValueError("need at least one polynomial")
-    d = max(p.degree for p in polys)
-    if any(p.degree != d for p in polys):
-        raise ValueError("batched polys must share the same degree")
-    if d < 1:
-        raise ValueError("degree must be at least 1")
-    if len(mask) != d - 1:
-        raise ValueError(f"need exactly {d - 1} masking VOLE elements, got {len(mask)}")
-    if field.encode(chi) == 0:
-        raise ValueError("chi must be nonzero")
-
-    # Aggregate A_e = sum_j chi^j * A_{e,j}, e = 0..d.  Honest -> A_d = 0.
-    A = [0] * (d + 1)
-    chi_j = 1
-    for poly in polys:
-        chi_j = field.mul(chi_j, chi)  # chi^1, chi^2, ...
-        coeffs = _delta_coefficients(poly, prover_wires, field)
-        for e, c in enumerate(coeffs):
-            A[e] = field.add(A[e], field.mul(chi_j, c))
-
-    # Mask using the construction described in the module docstring:
-    # A_0' = A_0 + b^{(0)}
-    # A_e' = A_e + a^{(e-1)} + b^{(e)}     for 1 <= e <= d-2
-    # A_{d-1}' = A_{d-1} + a^{(d-2)}
-    masked = list(A[:d])  # drop A_d (must be zero)
-    for j in range(d - 1):
-        a_j, b_j = mask.u[j], mask.v[j]
-        masked[j] = field.add(masked[j], b_j)
-        masked[j + 1] = field.add(masked[j + 1], a_j)
-    return PolyProof(masked_A=masked)
+    return PolynomialBatch(tuple(polys)).prove(prover_wires, chi, mask, field)
 
 
 def verify_polys(
@@ -177,38 +267,11 @@ def verify_polys(
     mask: VoleVerifierShare,
     field: Fp = F,
 ) -> bool:
-    if not polys:
+    try:
+        batch = PolynomialBatch(tuple(polys))
+    except ValueError:
         return False
-    d = max(p.degree for p in polys)
-    if any(p.degree != d for p in polys):
-        return False
-    if len(proof.masked_A) != d:
-        return False
-    if len(mask) != d - 1:
-        return False
-    if field.encode(chi) == 0:
-        return False
-    delta = mask.delta
-
-    # LHS: sum_e A_e' * Delta^e
-    lhs = 0
-    delta_pow = 1
-    for e in range(d):
-        lhs = field.add(lhs, field.mul(proof.masked_A[e], delta_pow))
-        delta_pow = field.mul(delta_pow, delta)
-
-    # RHS: sum_j chi^j * P_j(K_1, ..., K_n) + sum_j c^{(j)} * Delta^j
-    rhs = 0
-    chi_j = 1
-    for poly in polys:
-        chi_j = field.mul(chi_j, chi)
-        b_j = _evaluate_on_keys(poly, verifier_wires, delta, field)
-        rhs = field.add(rhs, field.mul(chi_j, b_j))
-    delta_pow = 1
-    for j in range(d - 1):
-        rhs = field.add(rhs, field.mul(mask.w[j], delta_pow))
-        delta_pow = field.mul(delta_pow, delta)
-    return lhs == rhs
+    return batch.verify(verifier_wires, chi, proof, mask, field)
 
 
 # ---- One-shot helper for tests / demos -------------------------------------
@@ -227,8 +290,4 @@ def run_poly_check(
     (so they are consistent with the wires already committed under
     that Delta).
     """
-    d = max(p.degree for p in polys)
-    p_share, v_share = trusted_dealer_setup(d - 1, field, delta=delta)
-    chi = field.rand_nonzero()
-    proof = prove_polys(polys, prover_wires, chi, p_share, field)
-    return verify_polys(polys, verifier_wires, chi, proof, v_share, field)
+    return PolynomialBatch(tuple(polys)).run(prover_wires, verifier_wires, delta, field)

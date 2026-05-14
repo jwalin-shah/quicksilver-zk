@@ -15,12 +15,16 @@ Run with the package command:
 
 from __future__ import annotations
 
+import os
+import sys
 import time
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from quicksilver.circuit import Circuit
 from quicksilver.field import F
 from quicksilver.itmac import prover_commit, verifier_receive
-from quicksilver.polynomial import Polynomial, run_poly_check
+from quicksilver.polynomial import Polynomial, PolynomialBatch
 from quicksilver.protocol import run
 from quicksilver.vole import trusted_dealer_setup
 
@@ -113,7 +117,7 @@ def demo_polynomial_extension() -> None:
         vwires[i] = vw
 
     t0 = time.time()
-    ok = run_poly_check(polys, pwires, vwires, delta)
+    ok = PolynomialBatch(polys).run(pwires, vwires, delta)
     dt = (time.time() - t0) * 1000
     print(f"  Batched check accepts: {ok}   (in {dt:.2f} ms)")
     print(f"  Communication: d = 2 field elements, regardless of how many\n"
