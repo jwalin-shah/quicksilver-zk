@@ -87,11 +87,6 @@ def run_cli_smoke() -> int:
         print("CLI parser smoke failed for demo command", file=sys.stderr)
         return 1
 
-    missing = [path.name for path in _demo_paths() if not path.exists()]
-    if missing:
-        print(f"CLI smoke missing demo files: {', '.join(missing)}", file=sys.stderr)
-        return 1
-
     print("QuickSilver CLI smoke passed.")
     return 0
 

@@ -37,6 +37,15 @@ def test_package_cli_smoke_contract(capsys):
     assert "QuickSilver CLI smoke passed." in capsys.readouterr().out
 
 
+def test_package_cli_smoke_does_not_require_source_tree_demos(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(cli, "_ROOT", tmp_path)
+
+    assert run_cli_smoke() == 0
+    captured = capsys.readouterr()
+    assert "QuickSilver CLI smoke passed." in captured.out
+    assert captured.err == ""
+
+
 def test_package_cli_smoke_entrypoint_runs_without_secrets():
     proc = subprocess.run(
         [sys.executable, "-m", "quicksilver", "smoke"],
