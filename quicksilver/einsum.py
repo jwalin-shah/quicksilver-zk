@@ -45,13 +45,15 @@ from quicksilver.circuit import Circuit
 
 def parse_einsum(spec: str) -> tuple[list[str], str]:
     """Split ``'ij,jk->ik'`` into (['ij','jk'], 'ik')."""
-    if "->" not in spec:
-        raise ValueError("einsum spec must contain '->'")
+    if spec.count("->") != 1:
+        raise ValueError("einsum spec must contain exactly one '->'")
     lhs, rhs = spec.split("->")
     inputs = [s.strip() for s in lhs.split(",")]
     output = rhs.strip()
     if not all(part for part in inputs):
         raise ValueError("empty input spec")
+    if len(set(output)) != len(output):
+        raise ValueError("output indices must not repeat")
     return inputs, output
 
 
