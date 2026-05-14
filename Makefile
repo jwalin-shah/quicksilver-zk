@@ -9,8 +9,6 @@ demo:
 	$(PYTHON) -m quicksilver demo all
 
 quick-validate:
-	$(PYTHON) -m pytest tests/ -q
-	$(PYTHON) -m quicksilver demo quicksilver_demo.py
-	$(PYTHON) -m quicksilver demo zk_einsum.py
+	$(PYTHON) -m quicksilver quick-validate
 
 validate: quick-validate

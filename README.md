@@ -216,11 +216,10 @@ ok, proof = run_ni(c, [1_000_003, 999_983])
 ```bash
 python3 -m pytest tests/ -q                      # full test suite
 python3 -m quicksilver test                      # package-level test command
-make quick-validate                              # tests + small demo subset
 python3 -m quicksilver demo                      # run all demos
 
-# Pull requests run the same quick validation target in CI:
-make quick-validate PYTHON=python3
+# Canonical local pre-handoff gate. Pull requests run this same target in CI.
+make quick-validate PYTHON=python3               # tests + small demo subset
 
 # `make quick-validate` skips the LPN scaling demo by default. To run
 # every tracked demo manually:

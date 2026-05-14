@@ -18,6 +18,10 @@ _DEMO_NAMES = (
     "quicksilver_boolean_demo.py",
     "lpn_vole_demo.py",
 )
+_QUICK_VALIDATION_DEMOS = (
+    "quicksilver_demo.py",
+    "zk_einsum.py",
+)
 
 
 def _demo_paths() -> List[Path]:
@@ -48,8 +52,23 @@ def run_demo(demo: str = "all") -> int:
     if not target.exists():
         return 1
     return _run([str(target)])
+
+
 def run_pytest() -> int:
     return _run(["-m", "pytest", "tests", "-q"])
+
+
+def run_quick_validation() -> int:
+    """Run the local pre-handoff validation gate used by CI."""
+    rc = run_pytest()
+    if rc != 0:
+        return rc
+
+    for demo in _QUICK_VALIDATION_DEMOS:
+        rc = run_demo(demo)
+        if rc != 0:
+            return rc
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -61,6 +80,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp_demo = sub.add_parser("demo", help="Run demos (all or one)")
     sp_demo.add_argument("name", nargs="?", default="all")
     sub.add_parser("test", help="Run test suite via pytest")
+    sub.add_parser("quick-validate", help="Run the local pre-handoff gate")
     return parser
 
 
@@ -72,6 +92,8 @@ def main(argv: list[str] | None = None) -> int:
         return run_demo(args.name)
     if args.command == "test":
         return run_pytest()
+    if args.command == "quick-validate":
+        return run_quick_validation()
     parser.print_help()
     return 1
 
