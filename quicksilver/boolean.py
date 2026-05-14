@@ -34,6 +34,7 @@ from dataclasses import dataclass, field as dc_field
 from enum import Enum
 from typing import Iterator, List, Tuple
 
+from quicksilver.challenge import is_nonzero_field_challenge
 from quicksilver.gf2k import GF128, GF2k
 
 
@@ -199,11 +200,6 @@ class BCommitMessage:
 class BBatchedCheck:
     U: int
     V: int
-
-
-def _challenge_is_valid(chi: int, field: GF2k) -> bool:
-    """Verifier challenge must be a non-zero field element."""
-    return type(chi) is int and 0 < chi < field.p
 
 
 @dataclass
@@ -388,7 +384,7 @@ def verify(
     Rejects malformed verifier challenges (zero or non-field values) to
     fail-closed while preserving protocol behavior on valid inputs.
     """
-    if not _challenge_is_valid(chi, mac_field):
+    if not is_nonzero_field_challenge(chi, mac_field):
         return False
     walker = _BVerifierWalker(
         circuit=circuit, share=share, mac_field=mac_field
