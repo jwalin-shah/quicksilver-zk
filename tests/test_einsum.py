@@ -33,6 +33,11 @@ def test_parse_einsum_matmul():
     assert output == "ik"
 
 
+def test_parse_einsum_rejects_repeated_output_index():
+    with pytest.raises(ValueError, match="output indices must not repeat"):
+        parse_einsum("i->ii")
+
+
 def test_resolve_dims_consistent():
     dims = resolve_dims(["ij", "jk"], [(3, 4), (4, 5)])
     assert dims == {"i": 3, "j": 4, "k": 5}
