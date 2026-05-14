@@ -11,6 +11,7 @@ import pytest
 
 from quicksilver.boolean import (
     BBatchedCheck,
+    BCommitMessage,
     BoolCircuit,
     prove,
     run,
@@ -153,6 +154,25 @@ def test_soundness_tampered_batched_check_caught():
     assert not verify(c, v, msg1, chi, bad)
 
 
+def test_soundness_zero_challenge_rejects_malicious_and_transcript():
+    c = BoolCircuit()
+    a, b = c.input(), c.input()
+    c.and_(a, b)
+
+    p, v = trusted_dealer_setup(c.vole_count())
+    msg1 = BCommitMessage(
+        d_values=[
+            1 ^ p.u[0],
+            1 ^ p.u[1],
+            0 ^ p.u[2],
+        ],
+        assert_openings=[],
+    )
+    msg2 = BBatchedCheck(U=p.v[3], V=p.u[3])
+
+    assert not verify(c, v, msg1, 0, msg2)
+
+
 def test_soundness_tampered_assertion_caught():
     c = BoolCircuit()
     a, b = c.input(), c.input()
@@ -165,7 +185,7 @@ def test_soundness_tampered_assertion_caught():
     assert not verify(c, v, msg1, chi, msg2)
 
 
-def test_verify_rejects_invalid_challenge():
+def test_verify_rejects_malformed_challenges():
     c = BoolCircuit()
     a = c.input()
     b = c.input()
@@ -175,7 +195,10 @@ def test_verify_rejects_invalid_challenge():
     msg2 = batched(GF128.rand_nonzero())
 
     assert not verify(c, v, msg1, 0, msg2)
+    assert not verify(c, v, msg1, True, msg2)
     assert not verify(c, v, msg1, GF128.p, msg2)
+    assert not verify(c, v, msg1, GF128.p + 1, msg2)
+    assert not verify(c, v, msg1, "1", msg2)
 
 
 # ---- Larger circuit -----------------------------------------------------
