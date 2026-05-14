@@ -225,6 +225,8 @@ class _BProverWalker:
                 f"witness length {len(self.witness)} != "
                 f"num inputs {self.circuit.num_inputs}"
             )
+        if any(bit not in (0, 1) for bit in self.witness):
+            raise ValueError("boolean witness values must be 0 or 1")
         vole = iter(zip(self.share.u, self.share.v))
         wit = iter(self.witness)
         for g in self.circuit.gates:
@@ -237,7 +239,7 @@ class _BProverWalker:
         f = self.mac_field
         op = g.op
         if op is BOp.INPUT:
-            x = int(next(wit)) & 1
+            x = next(wit)
             u, v = next(vole)
             wire, d = _commit_bit(x, u, v, f)
             self.wires[g.out] = wire

@@ -130,6 +130,17 @@ def test_completeness_negation():
     assert run(c, [1])
 
 
+def test_boolean_witness_values_must_be_bits():
+    c = BoolCircuit()
+    a = c.input()
+    c.assert_eq_const(a, 1)
+
+    p, _ = trusted_dealer_setup(c.vole_count())
+
+    with pytest.raises(ValueError, match="boolean witness values must be 0 or 1"):
+        prove(c, [3], p)
+
+
 # ---- Soundness ----------------------------------------------------------
 
 
