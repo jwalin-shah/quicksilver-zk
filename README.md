@@ -236,6 +236,18 @@ python3 -m quicksilver demo quicksilver_boolean_demo.py # 8-bit multiplier, mixe
 python3 -m quicksilver demo lpn_vole_demo.py     # LPN-based PCG
 ```
 
+## Runtime outputs and fixtures
+
+The repo keeps validation evidence and planning fixtures under
+`docs/overnight/`. Treat those files as small, deterministic tracked
+artifacts: update them intentionally, and do not use them for local
+runtime logs or caches.
+
+Package CLI subprocesses write transient Python and pytest caches under
+the ignored `.quicksilver-runtime/` directory by default. Set
+`QUICKSILVER_RUNTIME_DIR=/path/to/local/dir` to redirect those local
+outputs without changing tracked fixtures.
+
 ## Tensor-logic tie-in
 
 The repo's premise -- a Datalog rule head and an einsum are the same

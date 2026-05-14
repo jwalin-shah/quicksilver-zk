@@ -12,6 +12,8 @@ from typing import Iterable, List
 
 
 _ROOT = Path(__file__).resolve().parents[1]
+_RUNTIME_DIR_ENV = "QUICKSILVER_RUNTIME_DIR"
+_RUNTIME_DIR_DEFAULT = ".quicksilver-runtime"
 _DEMO_NAMES = (
     "quicksilver_demo.py",
     "zk_einsum.py",
@@ -29,6 +31,11 @@ def _demo_paths() -> List[Path]:
     return [_ROOT / "demos" / name for name in _DEMO_NAMES]
 
 
+def _runtime_dir() -> Path:
+    configured = os.environ.get(_RUNTIME_DIR_ENV, _RUNTIME_DIR_DEFAULT)
+    return Path(configured).expanduser()
+
+
 def _run(argv: Iterable[str], *, cwd: Path | None = None) -> int:
     cmd = [sys.executable, *argv]
     env = os.environ.copy()
@@ -36,6 +43,10 @@ def _run(argv: Iterable[str], *, cwd: Path | None = None) -> int:
     env["PYTHONPATH"] = (
         str(_ROOT) if not pythonpath else os.pathsep.join((str(_ROOT), pythonpath))
     )
+    runtime_dir = _runtime_dir()
+    if not runtime_dir.is_absolute():
+        runtime_dir = _ROOT / runtime_dir
+    env.setdefault("PYTHONPYCACHEPREFIX", str(runtime_dir / "pycache"))
     proc = subprocess.run(cmd, cwd=str(cwd or _ROOT), env=env)
     return proc.returncode
 
@@ -61,7 +72,9 @@ def run_demo(demo: str = "all") -> int:
 
 
 def run_pytest() -> int:
-    return _run(["-m", "pytest", "tests", "-q"])
+    runtime_dir = _runtime_dir()
+    cache_dir = runtime_dir / "pytest-cache"
+    return _run(["-m", "pytest", "tests", "-q", "-o", f"cache_dir={cache_dir}"])
 
 
 def run_quick_validation() -> int:

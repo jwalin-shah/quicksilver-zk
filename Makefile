@@ -1,14 +1,16 @@
 PYTHON ?= python3
+QUICKSILVER_RUNTIME_DIR ?= .quicksilver-runtime
+PYTHONPYCACHEPREFIX ?= $(CURDIR)/$(QUICKSILVER_RUNTIME_DIR)/pycache
 
 .PHONY: test quick-validate validate demo
 
 test:
-	$(PYTHON) -m pytest tests/ -q
+	QUICKSILVER_RUNTIME_DIR=$(QUICKSILVER_RUNTIME_DIR) PYTHONPYCACHEPREFIX=$(PYTHONPYCACHEPREFIX) $(PYTHON) -m pytest tests/ -q -o cache_dir=$(QUICKSILVER_RUNTIME_DIR)/pytest-cache
 
 demo:
-	$(PYTHON) -m quicksilver demo all
+	QUICKSILVER_RUNTIME_DIR=$(QUICKSILVER_RUNTIME_DIR) PYTHONPYCACHEPREFIX=$(PYTHONPYCACHEPREFIX) $(PYTHON) -m quicksilver demo all
 
 quick-validate:
-	$(PYTHON) -m quicksilver quick-validate
+	QUICKSILVER_RUNTIME_DIR=$(QUICKSILVER_RUNTIME_DIR) PYTHONPYCACHEPREFIX=$(PYTHONPYCACHEPREFIX) $(PYTHON) -m quicksilver quick-validate
 
 validate: quick-validate
