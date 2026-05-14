@@ -23,6 +23,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field as dc_field
 from typing import Iterator, List, Tuple
 
+from quicksilver.challenge import is_nonzero_field_challenge
 from quicksilver.circuit import Circuit, Gate, Op
 from quicksilver.field import F, Fp
 from quicksilver.itmac import (
@@ -58,11 +59,6 @@ class BatchedCheck:
 
     U: int
     V: int
-
-
-def _challenge_is_valid(chi: int, field: Fp) -> bool:
-    """Verifier challenge must be a non-zero field element."""
-    return type(chi) is int and 0 < chi < field.p
 
 
 # ---- Prover walker ---------------------------------------------------------
@@ -270,7 +266,7 @@ def verify(
     Security note: this is designated-verifier ZK. The default trusted-dealer
     VOLE setup and toy LPN defaults in ``lpn_vole`` are for demos only.
     """
-    if not _challenge_is_valid(chi, field):
+    if not is_nonzero_field_challenge(chi, field):
         return False
 
     walker = _VerifierWalker(circuit=circuit, share=share, field=field)
