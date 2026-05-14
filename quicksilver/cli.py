@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -30,7 +31,12 @@ def _demo_paths() -> List[Path]:
 
 def _run(argv: Iterable[str], *, cwd: Path | None = None) -> int:
     cmd = [sys.executable, *argv]
-    proc = subprocess.run(cmd, cwd=str(cwd or _ROOT))
+    env = os.environ.copy()
+    pythonpath = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = (
+        str(_ROOT) if not pythonpath else os.pathsep.join((str(_ROOT), pythonpath))
+    )
+    proc = subprocess.run(cmd, cwd=str(cwd or _ROOT), env=env)
     return proc.returncode
 
 

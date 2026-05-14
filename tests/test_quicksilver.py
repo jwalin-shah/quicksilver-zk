@@ -20,9 +20,8 @@ from quicksilver.itmac import (
 )
 from quicksilver.polynomial import (
     Polynomial,
-    prove_polys,
+    PolynomialBatch,
     run_poly_check,
-    verify_polys,
 )
 from quicksilver.protocol import (
     BatchedCheck,
@@ -307,17 +306,30 @@ def test_polynomial_soundness_caught():
     delta = v_share.delta
     pwires, vwires = _commit_values([2], p_share, delta)
     poly = Polynomial(terms=((1, (0, 0, 0)), (-9, ())))
+    batch = PolynomialBatch((poly,))
 
-    # Honest prove call ignores soundness and just reports A_0..A_{d-1}.
-    # The verifier's check should still fail because A_d != 0.
-    mask_p, mask_v = trusted_dealer_setup(2, delta=delta)  # d-1 = 2 mask elements
+    # Honest prove call ignores soundness and just reports masked lower
+    # coefficients. The verifier's check should still fail because A_d != 0.
+    mask_p, mask_v = batch.new_mask(delta=delta)
     with pytest.raises(ValueError, match="chi must be nonzero"):
-        prove_polys([poly], pwires, 0, mask_p)
+        batch.prove(pwires, 0, mask_p)
 
     chi = F.rand_nonzero()
-    proof = prove_polys([poly], pwires, chi, mask_p)
-    assert not verify_polys([poly], vwires, 0, proof, mask_v)
-    assert not verify_polys([poly], vwires, chi, proof, mask_v)
+    proof = batch.prove(pwires, chi, mask_p)
+    assert not batch.verify(vwires, 0, proof, mask_v)
+    assert not batch.verify(vwires, chi, proof, mask_v)
+
+
+def test_polynomial_batch_owns_mask_shape():
+    poly = Polynomial(terms=((1, (0, 0, 0)), (-8, ())))
+    batch = PolynomialBatch([poly])
+
+    assert batch.degree == 3
+    assert batch.mask_count == 2
+    p_mask, v_mask = batch.new_mask(delta=123)
+    assert len(p_mask) == batch.mask_count
+    assert len(v_mask) == batch.mask_count
+    assert v_mask.delta == 123
 
 
 # ---- Sanity: low-level walker computes coherent state ------------------
