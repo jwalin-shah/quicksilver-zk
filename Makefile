@@ -1,6 +1,6 @@
 PYTHON ?= python3
 QUICKSILVER_RUNTIME_DIR ?= .quicksilver-runtime
-PYTHONPYCACHEPREFIX ?= $(CURDIR)/$(QUICKSILVER_RUNTIME_DIR)/pycache
+PYTHONPYCACHEPREFIX ?= $(abspath $(QUICKSILVER_RUNTIME_DIR))/pycache
 
 .PHONY: test quick-validate validate demo
 
